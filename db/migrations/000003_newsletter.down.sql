@@ -1,0 +1,4 @@
+DROP TABLE IF EXISTS razorpay_details CASCADE;
+DROP TABLE IF EXISTS payments CASCADE;
+DROP TABLE IF EXISTS subscriptions CASCADE;
+DROP TABLE IF EXISTS employers_newsletter;

@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package employer;
+
+option go_package = "./";
+
+import "google/protobuf/timestamp.proto";
+
+message CreateEmployerReq {
+    string name = 1;
+    string email = 2;
+    string phone = 3;
+    string address = 4;
+    string country = 5;
+    string website = 6;
+}
+
+message EmployerRes {
+    int64 id = 1;
+    string name = 2;
+    string email = 3;
+    string phone = 4;
+    string address = 5;
+    string country = 6;
+    string website = 7;
+    google.protobuf.Timestamp createdat = 8;
+    google.protobuf.Timestamp updatedat = 9;
+}
+
+message EmpLoginReq {
+    string email = 1;
+    string password = 2;
+}
+
+service Employer {
+    rpc CreateEmployer(CreateEmployerReq) returns (EmployerRes) {}
+    rpc LoginEmployer(EmpLoginReq) returns (EmployerRes) {}
+}

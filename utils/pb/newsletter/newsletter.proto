@@ -1,0 +1,100 @@
+syntax = "proto3";
+
+package newsletter;
+
+option go_package = "./";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+message NewsLetterRes{
+    int64 id = 1;
+    int64 employerId = 2;
+	string Content = 3;
+    bool isFree = 4;
+	float amount = 5;
+}
+
+message ListNewsLetterRes {
+    repeated NewsLetterRes newletters = 1;
+
+}
+
+message NLid {
+    int64 id = 1;
+}
+
+message Subid {
+    int64 id = 1;
+}
+
+message SubscriptionReq {
+    int64 jobseekerid = 1;
+    int64 newsletterid = 2;
+}
+
+message SubscriptionRes {
+    int64 id = 1;
+    int64 jobseeker_id = 2;
+    int64 newletter_id = 3;
+    google.protobuf.Timestamp startdate = 4;
+    google.protobuf.Timestamp enddate = 5;
+    string status = 6;
+}
+
+message PaymentRes {
+    int64 id = 1;
+    int64 subscription_id = 2;
+    float amount = 3;
+    string status = 4;
+    google.protobuf.Timestamp date = 5;
+}
+
+message RazorpayRes {
+    int64 id = 1;
+    int64 payment_id = 2;
+    string pay_id = 3;
+    string order_id = 4;
+    string signature = 5;
+}
+
+message SPR {
+    SubscriptionRes subscirption = 1;
+    PaymentRes payment = 2;
+    RazorpayRes razorpay = 3;
+}
+
+message Razorpay {
+    string pay_id = 3;
+    string order_id = 4;
+    string signature = 5;
+}
+
+message UpdateSubscriptionAndPaymentReq {
+    Subid subid = 1;
+    Razorpay razorpay = 2;
+}
+
+message GetSubscribersReq {
+    int64 empid = 1;
+    int64 nlid = 2;
+}
+
+message GetSubscribersRes {
+    repeated SubscriptionRes subs = 1;
+    int64 active = 2;
+    int64 inactive = 3;
+    int64 canceled = 4;
+    int64 expired = 5;
+}
+
+service NewsLetter {
+    rpc AddSubscription(SubscriptionReq) returns (SPR) {}
+    rpc CancelSubscription(Subid) returns (google.protobuf.Empty) {}
+    rpc GetNewsLetter(NLid) returns (NewsLetterRes) {}
+    rpc ListNewsLetters(google.protobuf.Empty) returns (ListNewsLetterRes) {}
+    rpc GetSubscriptionAndPaymentDetails(Subid) returns (SPR) {}
+    rpc UpdateSubscriptionAndPayment(UpdateSubscriptionAndPaymentReq) returns (google.protobuf.Empty) {}
+
+    rpc GetSubscribers(GetSubscribersReq) returns (GetSubscribersRes) {}
+}

@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+package job;
+
+option go_package = "./";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+message CreateJobseekerReq {
+    string firstname = 1;
+    string lastname = 2;
+    string email = 3;
+    string password = 4;
+    string gender = 5;
+    string phone = 6;
+    google.protobuf.Timestamp dateofbirth = 7;
+}
+
+message CreateJobseekerRes {
+    int64 id = 1;
+    string firstname = 2;
+    string lastname = 3;
+    string email = 4;
+    string gender = 5;
+    string phone = 6;
+    google.protobuf.Timestamp dateofbirth = 7;
+    google.protobuf.Timestamp createdat = 8;
+    string updatedat = 9;
+}
+
+message JobSeekerProfileReq {
+    int64 jobseekerid = 1;
+    string summary = 2;
+    string city = 3;
+    string country = 4;
+    string education = 6;
+    string experience = 7;
+}
+
+message JobSeekerProfileRes {
+    CreateJobseekerRes jobseeker = 1;
+    string summary = 2;
+    string city = 3;
+    string country = 4;
+    string education = 6;
+    string experience = 7;
+}
+
+message JobSeekerID {
+    int64 id = 1;
+}
+
+message JSLoginReq {
+    string email = 1;
+    string password = 2;
+}
+
+message FollowEmployerReq {
+    int64 jobseekerid = 1;
+    int64 employerid = 2;
+}
+
+message EmployerRes {
+    int64 id = 1;
+    string name = 2;
+    string phone = 3;
+    string address = 4;
+    string country = 5;
+    string website = 6;
+}
+
+service JobSeeker {
+    rpc CreateJobseeker(CreateJobseekerReq) returns (CreateJobseekerRes) {}
+    rpc CreateJobSeekerProfile(JobSeekerProfileReq) returns (JobSeekerProfileRes) {}
+    rpc GetJobseekerProfile(JobSeekerID) returns (JobSeekerProfileRes) {}
+    rpc LoginJobseeker(JSLoginReq) returns (CreateJobseekerRes) {}
+    rpc FollowEmployer(FollowEmployerReq) returns (EmployerRes) {}
+    rpc UnFollowEmployer(FollowEmployerReq) returns (google.protobuf.Empty) {}
+}
