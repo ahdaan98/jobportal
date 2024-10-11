@@ -20,8 +20,8 @@ func NewEMPLOYERstorer(db *sqlx.DB) *EMPLOYERstorer {
 
 func (es *EMPLOYERstorer) CreateEmployer(ctx context.Context, e *CreateEmployerReq) (int64, error) {
     stmt, err := es.db.PrepareNamedContext(ctx, `
-        INSERT INTO employers (name, email, phone, address, country, website)
-        VALUES (:name, :email, :phone, :address, :country, :website)
+        INSERT INTO employers (name, email, password, phone, address, country, website)
+        VALUES (:name, :email, :password, :phone, :address, :country, :website)
         RETURNING id`)
     if err != nil {
         return 0, fmt.Errorf("error preparing employer insert statement: %w", err)
@@ -38,7 +38,7 @@ func (es *EMPLOYERstorer) CreateEmployer(ctx context.Context, e *CreateEmployerR
 
 func (es *EMPLOYERstorer) GetEmployer(ctx context.Context, id int64) (*EmployerRes, error) {
 	query := `
-	SELECT id, name, phone, address, country, website FROM employers WHERE id=$1; 
+	SELECT id, name, email, phone, address, country, website FROM employers WHERE id=$1; 
 	`
 	var e EmployerRes
 	err := es.db.GetContext(ctx, &e, query, id)

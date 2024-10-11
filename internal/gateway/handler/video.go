@@ -6,11 +6,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type VideoCallHandler struct {}
+type VideoCallHandler struct{}
 
 func NewVideoCallHandler() *VideoCallHandler {
-	return &VideoCallHandler{
-	}
+	return &VideoCallHandler{}
 }
 
 func (v *VideoCallHandler) ExitPage(c *gin.Context) {

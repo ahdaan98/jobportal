@@ -7,20 +7,21 @@ import (
 
 func toCreateEmployer(e *pb.CreateEmployerReq) *employer.CreateEmployerReq {
 	return &employer.CreateEmployerReq{
-		Name:    e.Name,
-		Email:   e.Email,
-		Phone:   e.Phone,
-		Address: e.Address,
-		Country: e.Country,
-		Website: e.Website,
+		Name:     e.Name,
+		Email:    e.Email,
+		Password: e.Password,
+		Phone:    e.Phone,
+		Address:  e.Address,
+		Country:  e.Country,
+		Website:  e.Website,
 	}
 }
-
 
 func toEmployerRes(e *employer.EmployerRes) *pb.EmployerRes {
 	return &pb.EmployerRes{
 		Id:      e.ID,
 		Name:    e.Phone,
+		Email:   e.Email,
 		Country: e.Country,
 		Address: e.Address,
 		Phone:   e.Phone,

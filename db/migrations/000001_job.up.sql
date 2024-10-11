@@ -2,6 +2,7 @@ CREATE TABLE employers (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255),
     phone VARCHAR(15),
     address VARCHAR(255),
     country VARCHAR(100),
@@ -31,12 +32,12 @@ CREATE TABLE applications (
     applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-INSERT INTO employers (name, email, phone, address, country, website) VALUES
-('Tech Solutions', 'contact@techsolutions.com', '+1234567890', '123 Tech Lane', 'USA', 'www.techsolutions.com'),
-('HealthPlus Corp', 'info@healthplus.com', '+1987654321', '456 Health St', 'USA', 'www.healthplus.com'),
-('EcoFriendly Inc', 'support@ecofriendly.com', '+1122334455', '789 Green Blvd', 'Canada', 'www.ecofriendly.com'),
-('FinanceGuru', 'hello@financeguru.com', '+1223344556', '321 Money St', 'UK', 'www.financeguru.com'),
-('TravelNest', 'booking@travelnest.com', '+1334455667', '654 Journey Ave', 'Australia', 'www.travelnest.com');
+INSERT INTO employers (name, email, password, phone, address, country, website) VALUES
+('Tech Solutions', 'contact@techsolutions.com', 'techpass123', '+1234567890', '123 Tech Lane', 'USA', 'www.techsolutions.com'),
+('HealthPlus Corp', 'info@healthplus.com', 'healthpass123', '+1987654321', '456 Health St', 'USA', 'www.healthplus.com'),
+('EcoFriendly Inc', 'support@ecofriendly.com', 'ecopass123', '+1122334455', '789 Green Blvd', 'Canada', 'www.ecofriendly.com'),
+('FinanceGuru', 'hello@financeguru.com', 'financepass123', '+1223344556', '321 Money St', 'UK', 'www.financeguru.com'),
+('TravelNest', 'booking@travelnest.com', 'travelpass123', '+1334455667', '654 Journey Ave', 'Australia', 'www.travelnest.com');
 
 INSERT INTO jobs (employer_id, title, employment_type, description, location, salary, experience_level) VALUES
 (1, 'Software Engineer', 'Full-time', 'Develop and maintain software applications.', 'New York, NY', 95000.00, 'Mid-level'),

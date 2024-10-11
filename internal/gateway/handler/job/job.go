@@ -46,6 +46,7 @@ func (h *Handler) CreateJob(c *gin.Context) {
 			Errors:  map[string]string{"request": "Unable to parse request body"},
 		}
 		c.JSON(errRes.Code, errRes)
+		log.Printf("CreateJob: %v", errRes)
 		return
 	}
 
@@ -58,6 +59,8 @@ func (h *Handler) CreateJob(c *gin.Context) {
 			Errors:  map[string]string{"grpc": err.Error()},
 		}
 		c.JSON(errRes.Code, errRes)
+		log.Printf("CreateJob: %v", errRes)
+		return
 	}
 
 	res := toJobRes(job)
@@ -68,6 +71,7 @@ func (h *Handler) CreateJob(c *gin.Context) {
 		Data:    res,
 	}
 	c.JSON(succRes.Code, succRes)
+	log.Printf("CreateJob: %v", succRes)
 }
 
 func (h *Handler) GetJob(c *gin.Context) {
@@ -81,6 +85,7 @@ func (h *Handler) GetJob(c *gin.Context) {
 			Errors:  map[string]string{"grpc": err.Error()},
 		}
 		c.JSON(errRes.Code, errRes)
+		log.Printf("GetJob: %v", errRes)
 		return
 	}
 
@@ -93,6 +98,7 @@ func (h *Handler) GetJob(c *gin.Context) {
 			Errors:  map[string]string{"grpc": err.Error()},
 		}
 		c.JSON(errRes.Code, errRes)
+		log.Printf("GetJob: %v", errRes)
 		return
 	}
 
@@ -104,6 +110,7 @@ func (h *Handler) GetJob(c *gin.Context) {
 		Data:    res,
 	}
 	c.JSON(succRes.Code, succRes)
+	log.Printf("GetJob: %v", succRes)
 }
 
 func (h *Handler) ListJobs(c *gin.Context) {
@@ -116,6 +123,7 @@ func (h *Handler) ListJobs(c *gin.Context) {
 			Errors:  map[string]string{"grpc": err.Error()},
 		}
 		c.JSON(errRes.Code, errRes)
+		log.Printf("ListJobs: %v", errRes)
 		return
 	}
 
@@ -131,6 +139,7 @@ func (h *Handler) ListJobs(c *gin.Context) {
 		Data:    res,
 	}
 	c.JSON(succRes.Code, succRes)
+	log.Printf("ListJobs: %v", succRes)
 }
 
 func (h *Handler) UpdateJob(c *gin.Context) {
@@ -144,6 +153,7 @@ func (h *Handler) UpdateJob(c *gin.Context) {
 			Errors:  map[string]string{"grpc": err.Error()},
 		}
 		c.JSON(errRes.Code, errRes)
+		log.Printf("UpdateJob: %v", errRes)
 		return
 	}
 
@@ -157,10 +167,11 @@ func (h *Handler) UpdateJob(c *gin.Context) {
 			Errors:  map[string]string{"request": "Unable to parse request body"},
 		}
 		c.JSON(errRes.Code, errRes)
+		log.Printf("UpdateJob: %v", errRes)
 		return
 	}
 
-	log.Println(j)
+	log.Println("UpdateJob: Received job request:", j)
 
 	job, err := h.client.UpdateJob(h.ctx, &pb.UpdateJobReq{Id: v, Job: toPBJobReq(&j)})
 	if err != nil {
@@ -171,6 +182,7 @@ func (h *Handler) UpdateJob(c *gin.Context) {
 			Errors:  map[string]string{"grpc": err.Error()},
 		}
 		c.JSON(errRes.Code, errRes)
+		log.Printf("UpdateJob: %v", errRes)
 		return
 	}
 
@@ -182,6 +194,7 @@ func (h *Handler) UpdateJob(c *gin.Context) {
 		Data:    res,
 	}
 	c.JSON(succRes.Code, succRes)
+	log.Printf("UpdateJob: %v", succRes)
 }
 
 func (h *Handler) ApplyJob(c *gin.Context) {
@@ -195,6 +208,7 @@ func (h *Handler) ApplyJob(c *gin.Context) {
 			Errors:  map[string]string{"jobseeker_id": err.Error()},
 		}
 		c.JSON(errRes.Code, errRes)
+		log.Printf("ApplyJob: %v", errRes)
 		return
 	}
 
@@ -208,6 +222,7 @@ func (h *Handler) ApplyJob(c *gin.Context) {
 			Errors:  map[string]string{"job_id": err.Error()},
 		}
 		c.JSON(errRes.Code, errRes)
+		log.Printf("ApplyJob: %v", errRes)
 		return
 	}
 
@@ -220,6 +235,7 @@ func (h *Handler) ApplyJob(c *gin.Context) {
 			Errors:  map[string]string{"form_file": err.Error()},
 		}
 		c.JSON(errRes.Code, errRes)
+		log.Printf("ApplyJob: %v", errRes)
 		return
 	}
 
@@ -232,6 +248,7 @@ func (h *Handler) ApplyJob(c *gin.Context) {
 			Errors:  map[string]string{"resume": err.Error()},
 		}
 		c.JSON(errRes.Code, errRes)
+		log.Printf("ApplyJob: %v", errRes)
 		return
 	}
 	defer file.Close()
@@ -245,6 +262,7 @@ func (h *Handler) ApplyJob(c *gin.Context) {
 			Errors:  map[string]string{"resume": err.Error()},
 		}
 		c.JSON(errRes.Code, errRes)
+		log.Printf("ApplyJob: %v", errRes)
 		return
 	}
 
@@ -258,6 +276,7 @@ func (h *Handler) ApplyJob(c *gin.Context) {
 			Errors:  map[string]string{"resume": err.Error()},
 		}
 		c.JSON(errRes.Code, errRes)
+		log.Printf("ApplyJob: %v", errRes)
 		return
 	}
 
@@ -266,22 +285,22 @@ func (h *Handler) ApplyJob(c *gin.Context) {
 		errRes := response.ErrorResponse{
 			Status:  "error",
 			Code:    http.StatusInternalServerError,
-			Message: "failed to apply job",
-			Errors:  map[string]string{"apply_job": err.Error()},
+			Message: "Failed to apply for job",
+			Errors:  map[string]string{"grpc": err.Error()},
 		}
 		c.JSON(errRes.Code, errRes)
+		log.Printf("ApplyJob: %v", errRes)
 		return
 	}
 
-	res := toApplyJob(apj)
 	succRes := response.SuccessResponse{
 		Status:  "success",
-		Code:    http.StatusOK,
-		Message: "applied job successfully",
-		Data:    res,
+		Code:    http.StatusCreated,
+		Message: "Applied for job successfully",
+		Data:    apj,
 	}
-
 	c.JSON(succRes.Code, succRes)
+	log.Printf("ApplyJob: %v", succRes)
 }
 
 func (h *Handler) ListApplyJobsByid(c *gin.Context) {

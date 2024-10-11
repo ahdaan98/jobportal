@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"net/http"
+
 	"github.com/ahdaan67/jobportal/internal/gateway/handler/employer"
 	"github.com/ahdaan67/jobportal/internal/gateway/handler/job"
 	"github.com/ahdaan67/jobportal/internal/gateway/handler/jobseeker"
@@ -16,6 +18,8 @@ func RegisterRoutes(jobhandler *job.Handler, jobseekerhandler *jobseeker.Handler
 
 	r.Static("/static", "internal/gateway/static")
 	r.LoadHTMLGlob("internal/gateway/template/*")
+
+	r.GET("/", func(ctx *gin.Context) { ctx.HTML(http.StatusOK, "index.html", nil) })
 
 	r.GET("/exit", videoHandler.ExitPage)
 	r.GET("/error", videoHandler.ErrorPage)
@@ -55,6 +59,7 @@ func RegisterRoutes(jobhandler *job.Handler, jobseekerhandler *jobseeker.Handler
 	}
 
 	r.POST("/employer/signup", employerhandler.EmployerSignup)
+	r.POST("/employer/login", employerhandler.LoginEmployer)
 
 	employer := r.Group("/employer")
 	employer.Use(middleware.EmployerMiddleware())
@@ -66,10 +71,10 @@ func RegisterRoutes(jobhandler *job.Handler, jobseekerhandler *jobseeker.Handler
 		employer.PUT("/applicant/reject/:jobid/:jobseekerid", jobhandler.RejectApplicant)
 		employer.GET("/applicant/:jobid/:status", jobhandler.GetApplicantsByStatus)
 
-		employer.GET("/newsletter/subscribers/:employerid/:newsletterid", newletter.GetSubscribers)	
+		employer.GET("/newsletter/subscribers/:employerid/:newsletterid", newletter.GetSubscribers)
 	}
 
-	r.GET("/newsletter/subscribers/:employerid/:newsletterid", newletter.GetSubscribers)	
+	r.GET("/newsletter/subscribers/:employerid/:newsletterid", newletter.GetSubscribers)
 
 	return r
 }
