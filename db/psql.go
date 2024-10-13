@@ -2,8 +2,10 @@ package db
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
@@ -12,12 +14,24 @@ type Database struct {
 }
 
 func NewDatabase() (*Database, error) {
-	db, err := sqlx.Open("postgres", "postgres://postgres:2211@localhost:5432/jobportal?sslmode=disable")
+	err := godotenv.Load()
+	if err != nil {
+		return nil, fmt.Errorf("error loading .env file: %w", err)
+	}
+	dburl := getEnv("DBURL","")
+	db, err := sqlx.Open("postgres", dburl)
 	if err != nil {
 		return nil, fmt.Errorf("error opening database: %w", err)
 	}
 
 	return &Database{db: db}, nil
+}
+
+func getEnv(key, fallback string) string {
+	if value, exists := os.LookupEnv(key); exists {
+		return value
+	}
+	return fallback
 }
 
 func (d *Database) Close() error {

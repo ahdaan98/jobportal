@@ -22,7 +22,7 @@ func main() {
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	}
 
-	cfg, err := config.LoadConfig("config/config.yaml")
+	cfg, err := config.LoadConfig()
 	if err != nil {
 		log.Fatalf("cannot load config: %v", err)
 	}

@@ -2,48 +2,55 @@ package config
 
 import (
 	"fmt"
-	"io"
 	"os"
 
-	"gopkg.in/yaml.v2"
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
-	Email    string `yaml:"EMAIL"`
-	Password string `yaml:"PASSWORD"`
-
-	LinkedinClientID       string `yaml:"LINKEDIN_CLIENT_ID"`
-	LinkedinClientSecretID string `yaml:"LINKEDIN_CLIENT_SECRET"`
-
-	AcessKeyID      string `yaml:"ACCESSKEYID"`
-	SecretAccessKey string `yaml:"SECRETACCESSKEY"`
-	AwsRegion       string `yaml:"AWSREGION"`
-
-	RazorpayKey    string `yaml:"RAZORPAYKEY"`
-	RazorpaySecret string `yaml:"RAZORPAYSECRET"`
-
-	GatewayPort    string `yaml:"GATEWAYPORT"`
-	JobPort        string `yaml:"JOBPORT"`
-	UserPort       string `yaml:"USERPORT"`
-	NewsLetterPort string `yaml:"NEWSLETTERPORT"`
+	Email              string
+	Password           string
+	LinkedinClientID   string
+	LinkedinClientSecretID string
+	AcessKeyID        string
+	SecretAccessKey   string
+	AwsRegion         string
+	RazorpayKey       string
+	RazorpaySecret    string
+	GatewayPort       string
+	JobPort           string
+	UserPort          string
+	NewsLetterPort    string
 }
 
-func LoadConfig(filepath string) (*Config, error) {
-	file, err := os.Open(filepath)
+func LoadConfig() (*Config, error) {
+	err := godotenv.Load()
 	if err != nil {
-		return nil, fmt.Errorf("error opening config file: %w", err)
-	}
-	defer file.Close()
-
-	bytes, err := io.ReadAll(file)
-	if err != nil {
-		return nil, fmt.Errorf("error reading config file: %w", err)
+		return nil, fmt.Errorf("error loading .env file: %w", err)
 	}
 
-	var config Config
-	if err := yaml.Unmarshal(bytes, &config); err != nil {
-		return nil, fmt.Errorf("error parsing YAML file: %w", err)
+	config := &Config{
+		Email:              getEnv("EMAIL", ""),
+		Password:           getEnv("PASSWORD", ""),
+		LinkedinClientID:   getEnv("LINKEDIN_CLIENT_ID", ""),
+		LinkedinClientSecretID: getEnv("LINKEDIN_CLIENT_SECRET", ""),
+		AcessKeyID:        getEnv("ACCESSKEYID", ""),
+		SecretAccessKey:   getEnv("SECRETACCESSKEY", ""),
+		AwsRegion:         getEnv("AWSREGION", ""),
+		RazorpayKey:       getEnv("RAZORPAYKEY", ""),
+		RazorpaySecret:    getEnv("RAZORPAYSECRET", ""),
+		GatewayPort:       getEnv("GATEWAYPORT", ""),
+		JobPort:           getEnv("JOBPORT", ""),
+		UserPort:          getEnv("USERPORT", ""),
+		NewsLetterPort:    getEnv("NEWSLETTERPORT", ""),
 	}
 
-	return &config, nil
+	return config, nil
+}
+
+func getEnv(key, fallback string) string {
+	if value, exists := os.LookupEnv(key); exists {
+		return value
+	}
+	return fallback
 }

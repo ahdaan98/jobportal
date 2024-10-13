@@ -13,9 +13,9 @@ import (
 )
 
 func main() {
-	cfg,err := config.LoadConfig("config/config.yaml")
-	if err!=nil {
-		log.Fatalf("cannot load config: %v",err)
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		log.Fatalf("cannot load config: %v", err)
 	}
 	
 	db, err := db.NewDatabase()
