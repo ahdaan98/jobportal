@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 2211
+      POSTGRES_DB: jobportal
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - jobbportal-network
+
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.gateway
+    ports:
+      - "9091:9091"
+    depends_on:
+      - postgres
+    env_file:
+      - .env
+    networks:
+      - jobbportal-network
+
+  job:
+    build:
+      context: .
+      dockerfile: Dockerfile.job
+    ports:
+      - "9001:9001"
+    depends_on:
+      - postgres
+    env_file:
+      - .env
+    networks:
+      - jobbportal-network
+
+  user:
+    build:
+      context: .
+      dockerfile: Dockerfile.user
+    ports:
+      - "9002:9002"
+    depends_on:
+      - postgres
+    env_file:
+      - .env
+    networks:
+      - jobbportal-network
+
+  newsletter:
+    build:
+      context: .
+      dockerfile: Dockerfile.newsletter
+    ports:
+      - "9003:9003"
+    depends_on:
+      - postgres
+    env_file:
+      - .env
+    networks:
+      - jobbportal-network
+
+volumes:
+  postgres_data:
+
+networks:
+  jobbportal-network:

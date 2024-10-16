@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jobportal-newsletter
+  namespace: jobportal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: newsletter
+  template:
+    metadata:
+      labels:
+        app: newsletter
+    spec:
+      containers:
+        - name: newsletter-container
+          image: ahdaan/jobportal-newsletter:v1
+          ports:
+            - containerPort: 9003
+          envFrom:
+            - configMapRef:
+                name: jobportal-config
+            - secretRef:
+                name: jobportal-secrets
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: newsletter
+  namespace: jobportal
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9003
+      targetPort: 9003
+  selector:
+    app: newsletter

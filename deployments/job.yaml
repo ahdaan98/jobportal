@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jobportal-job
+  namespace: jobportal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: job
+  template:
+    metadata:
+      labels:
+        app: job
+    spec:
+      containers:
+        - name: job-container
+          image: ahdaan/jobportal-job:v1
+          ports:
+            - containerPort: 9001
+          envFrom:
+            - configMapRef:
+                name: jobportal-config
+            - secretRef:
+                name: jobportal-secrets
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: job
+  namespace: jobportal
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9001
+      targetPort: 9001  
+  selector:
+    app: job

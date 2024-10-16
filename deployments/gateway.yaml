@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jobportal-gateway
+  namespace: jobportal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gateway
+  template:
+    metadata:
+      labels:
+        app: gateway
+    spec:
+      containers:
+        - name: gateway-container
+          image: ahdaan/jobportal-gateway:v1
+          ports:
+            - containerPort: 9091
+          envFrom:
+            - configMapRef:
+                name: jobportal-gateway-config
+            - secretRef:
+                name: jobportal-secrets
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway
+  namespace: jobportal
+spec:
+  type: LoadBalancer
+  ports:
+    - targetPort: 9091
+      port: 9091
+      nodePort: 30005
+  selector:
+    app: gateway

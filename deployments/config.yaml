@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jobportal-config
+  namespace: jobportal
+data:
+  EMAIL: "ahdaanhashim67@gmail.com"
+  LINKEDIN_CLIENT_ID: "862dtm5o4he3wf"
+  ACCESSKEYID: "AKIAW3MEFXIELKJ77CAL"
+  AWSREGION: "us-east-1"
+  RAZORPAYKEY: "rzp_test_jwv3Qf1LHRzjKC"
+  GATEWAYPORT: ":9091"
+  JOBPORT: ":9001"
+  USERPORT: ":9002"
+  NEWSLETTERPORT: ":9003"
