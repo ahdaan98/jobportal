@@ -37,10 +37,10 @@ metadata:
   name: gateway
   namespace: jobportal
 spec:
-  type: LoadBalancer
-  ports:
-    - targetPort: 9091
-      port: 9091
-      nodePort: 30005
   selector:
-    app: gateway
+    app: gateway  # This should match the labels of the pods serving the gateway
+  ports:
+    - protocol: TCP
+      port: 9091
+      targetPort: 9091  # This should match the port exposed by the container
+  type: ClusterIP  # Ensure the service type is appropriate
