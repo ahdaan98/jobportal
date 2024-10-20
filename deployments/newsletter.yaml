@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: newsletter-container
-          image: ahdaan/jobportal-newsletter:v1
+          image: ahdaan/jobportal-newsletter:v6
           ports:
             - containerPort: 9003
           envFrom:

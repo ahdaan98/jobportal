@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: user-container
-          image: ahdaan/jobportal-user:v1
+          image: ahdaan/jobportal-user:v6
           ports:
             - containerPort: 9002
           envFrom:

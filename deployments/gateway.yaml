@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: gateway-container
-          image: ahdaan/jobportal-gateway:v1
+          image: ahdaan/jobportal-gateway:v6
           ports:
             - containerPort: 9091
           envFrom:
