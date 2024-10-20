@@ -124,6 +124,46 @@ func (ns *NEWSLETTERstorer) GetSubscription(ctx context.Context, id int64) (*Sub
 	return &s, nil
 }
 
+func (ns *NEWSLETTERstorer) CreateNewsletter(ctx context.Context, newsletter *NewsLetterReq) (*NewsLetterRes, error) {
+	var newsletterID int64
+	var createdAt time.Time
+
+	err := ns.db.QueryRowContext(ctx, `
+		INSERT INTO employers_newsletter (employer_id, content, isfree, amount)
+		VALUES ($1, $2, $3, $4)
+		RETURNING id, created_at`, 
+		newsletter.EmployerID, newsletter.Content, newsletter.IsFree, newsletter.Amount).
+		Scan(&newsletterID, &createdAt)
+
+	if err != nil {
+		return nil, fmt.Errorf("error creating newsletter: %w", err)
+	}
+
+	res := &NewsLetterRes{
+		ID:         newsletterID,
+		EmployerID: newsletter.EmployerID,
+		Content:    newsletter.Content,
+		IsFree:     newsletter.IsFree,
+		Amount:     newsletter.Amount,
+		CreatedAt:  createdAt,
+	}
+
+	return res, nil
+}
+
+func (ns *NEWSLETTERstorer) GetSubscriptionIds(ctx context.Context, id int64) ([]int64, error) {
+	var jsid []int64
+	err := ns.db.SelectContext(ctx, &jsid, "SELECT id FROM subscriptions WHERE jobseeker_id=$1", id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("no Subscribption have been made")
+		}
+		return nil, fmt.Errorf("error getting subscription id's: %w", err)
+	}
+
+	return jsid, nil
+}
+
 func (ns *NEWSLETTERstorer) GetSubscriptionbyJobseekerandNewsletterid(ctx context.Context, s *SubscriptionReq) (*SubscriptionRes, error) {
 	var sr SubscriptionRes
 	err := ns.db.GetContext(ctx, &sr, "SELECT * FROM subscriptions WHERE jobseeker_id=$1 AND newletter_id=$2", s.JobseekerID, s.NewsLetterID)

@@ -14,7 +14,11 @@ WORKDIR /root/
 COPY --from=builder /app/gateway .
 COPY --from=builder /app/internal/gateway/static ./internal/gateway/static
 COPY --from=builder /app/internal/gateway/template ./internal/gateway/template
+COPY --from=builder /app/logging ./logging
+COPY --from=builder /app/logs ./logs
 COPY .env . 
+
+RUN mkdir -p /root/logs
 
 EXPOSE 9091
 

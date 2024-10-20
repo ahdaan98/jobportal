@@ -8,6 +8,15 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+func toNewsletter(n *pb.NewsLetterReq) *storer.NewsLetterReq {
+	return &storer.NewsLetterReq{
+		EmployerID: n.EmployerId,
+		Content:    n.Content,
+		IsFree:     n.IsFree,
+		Amount:     n.Amount,
+	}
+}
+
 func toPBNewsLetterRes(n *storer.NewsLetterRes) *pb.NewsLetterRes {
 	return &pb.NewsLetterRes{
 		Id:         n.ID,

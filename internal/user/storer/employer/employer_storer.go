@@ -49,6 +49,42 @@ func (es *EMPLOYERstorer) GetEmployer(ctx context.Context, id int64) (*EmployerR
 	return &e, nil
 }
 
+func (es *EMPLOYERstorer) GetEmployers(ctx context.Context) ([]*EmployerRes, error) {
+	var emps []*EmployerRes
+	err := es.db.SelectContext(ctx, &emps, "SELECT id, name, email, phone, address, country, website FROM employers")
+	if err != nil {
+		return nil, fmt.Errorf("error listing employers: %w", err)
+	}
+
+	return emps, nil
+}
+
+func (es *EMPLOYERstorer) GetFollowersCount(ctx context.Context, id int64) (int64, error) {
+	var count int64
+	err := es.db.GetContext(ctx, &count, "SELECT COUNT(*) FROM follows WHERE employer_id=$1",id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, nil
+		}
+		return 0, fmt.Errorf("error getting employer followeres count: %w", err)
+	}
+
+	return count, nil
+}
+
+func (es *EMPLOYERstorer) GetJobCounts(ctx context.Context, id int64) (int64, error) {
+	var count int64
+	err := es.db.GetContext(ctx, &count, "SELECT COUNT(*) FROM jobs WHERE employer_id=$1",id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, nil
+		}
+		return 0, fmt.Errorf("error getting employer job counts: %w", err)
+	}
+
+	return count, nil
+}
+
 func (es *EMPLOYERstorer) IsEmployerExist(ctx context.Context, email string) (bool, error) {
 	var count int64
 	err := es.db.GetContext(ctx, &count, "SELECT COUNT(*) FROM employers WHERE email=$1", email)

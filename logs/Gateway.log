@@ -1,0 +1,5 @@
+time="2024-10-21T02:35:48+05:30" level=info msg="Configuration loaded successfully."
+time="2024-10-21T02:35:48+05:30" level=info msg="Connected to job service."
+time="2024-10-21T02:35:48+05:30" level=info msg="Connected to user service."
+time="2024-10-21T02:35:48+05:30" level=info msg="Connected to newsletter service."
+time="2024-10-21T02:35:48+05:30" level=info msg="Routes registered successfully."

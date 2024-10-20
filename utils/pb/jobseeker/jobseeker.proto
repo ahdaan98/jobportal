@@ -70,6 +70,14 @@ message EmployerRes {
     string website = 6;
 }
 
+message Employers {
+    repeated EmployerRes emp = 1;
+}
+
+message Jobseekers {
+    repeated CreateJobseekerRes jobseekers = 1;
+}
+
 service JobSeeker {
     rpc CreateJobseeker(CreateJobseekerReq) returns (CreateJobseekerRes) {}
     rpc CreateJobSeekerProfile(JobSeekerProfileReq) returns (JobSeekerProfileRes) {}
@@ -77,4 +85,7 @@ service JobSeeker {
     rpc LoginJobseeker(JSLoginReq) returns (CreateJobseekerRes) {}
     rpc FollowEmployer(FollowEmployerReq) returns (EmployerRes) {}
     rpc UnFollowEmployer(FollowEmployerReq) returns (google.protobuf.Empty) {}
+    rpc GetFollowingEmployers(JobSeekerID) returns (Employers) {}
+    rpc GetJobseeker(JobSeekerID) returns (CreateJobseekerRes) {}
+    rpc GetJobseekers(google.protobuf.Empty) returns (Jobseekers) {}
 }

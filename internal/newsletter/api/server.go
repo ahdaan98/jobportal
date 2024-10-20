@@ -26,6 +26,65 @@ func NewServer(storer *storer.NEWSLETTERstorer, cfg config.Config) *Server {
 	}
 }
 
+func (s *Server) CreateNewsletter(ctx context.Context, req *pb.NewsLetterReq) (*pb.NewsLetterRes, error) {
+	newsletter := toNewsletter(req)
+	if newsletter.Content == "" {
+		return nil, fmt.Errorf("please provide an newsletter content description")
+	}
+
+	if newsletter.Amount <= 0 {
+		return nil, fmt.Errorf("cannot use -ve amount")
+	}
+
+	if newsletter.IsFree && newsletter.Amount != 0{
+		return nil, fmt.Errorf("cannot enter amount for free service")
+	}
+	
+	if !newsletter.IsFree&& newsletter.Amount == 0{
+		return nil, fmt.Errorf("select free if no amount needed")
+	}
+
+	ns, err := s.storer.CreateNewsletter(ctx, newsletter)
+	if err!= nil {
+		return nil, err
+	}
+
+	return toPBNewsLetterRes(ns), nil
+}
+
+func (s *Server) GetSubscription(ctx context.Context, req *pb.SubscriptionReq) (*pb.ArrSPR, error) {
+	subids, err := s.storer.GetSubscriptionIds(ctx, req.Jobseekerid)
+	if err != nil {
+		return nil, err
+	}
+
+	var sprs []*pb.SPR
+	for _,subid := range subids {
+
+		sub, err := s.storer.GetSubscription(ctx, subid)
+		if err != nil {
+			log.Printf("Error retrieving subscription: %v", err)
+			return nil, err
+		}
+
+		pay, err := s.storer.GetPaymentBysubid(ctx, sub.ID)
+		if err != nil {
+			log.Printf("Error retrieving payment: %v", err)
+			return nil, err
+		}
+
+		razor, err := s.storer.GetRazorpayBypaymentid(ctx, pay.ID)
+		if err != nil {
+			log.Printf("Error retrieving Razorpay details: %v", err)
+			return nil, err
+		}
+
+		sprs=append(sprs,toPBSPR(sub, pay, razor))
+	}
+	log.Println(sprs)
+	return &pb.ArrSPR{Spr: sprs}, nil
+}
+
 func (s *Server) GetNewsLetter(ctx context.Context, req *pb.NLid) (*pb.NewsLetterRes, error) {
 	nl, err := s.storer.GetNewsLetter(ctx, req.GetId())
 	if err != nil {
@@ -51,96 +110,121 @@ func (s *Server) ListNewsLetters(ctx context.Context, req *emptypb.Empty) (*pb.L
 
 func (s *Server) AddSubscription(ctx context.Context, req *pb.SubscriptionReq) (*pb.SPR, error) {
 	log.Println("Starting AddSubscription process")
-	subb, err := s.storer.GetSubscriptionbyJobseekerandNewsletterid(ctx, &storer.SubscriptionReq{JobseekerID: req.Jobseekerid, NewsLetterID: req.Newsletterid})
+	
+	// Retrieve the subscription for the given jobseeker and newsletter
+	subb, err := s.storer.GetSubscriptionbyJobseekerandNewsletterid(ctx, &storer.SubscriptionReq{
+		JobseekerID: req.Jobseekerid,
+		NewsLetterID: req.Newsletterid,
+	})
 	if err != nil {
 		log.Printf("Error retrieving subscription: %v", err)
 		return nil, err
 	}
 
-	if subb.Status == storer.Cancelled {
-		yes, err := s.storer.IsSubscriptionExpired(ctx, subb.ID)
+	// If no subscription exists, create a new one
+	if subb == nil {
+		log.Printf("No existing subscription found for JobseekerID: %d and NewsletterID: %d. Creating new subscription.", req.Jobseekerid, req.Newsletterid)
+
+		log.Printf("Retrieving newsletter information for NewsletterID: %d", req.Newsletterid)
+		nl, err := s.storer.GetNewsLetter(ctx, req.Newsletterid)
 		if err != nil {
-			log.Printf("Error checking subscription expired: %v", err)
+			log.Printf("Error retrieving newsletter: %v", err)
 			return nil, err
 		}
 
+		if nl == nil {
+			return nil, fmt.Errorf("no newsletter found for NewsletterID %d", req.Newsletterid)
+		}
+
+		log.Printf("Creating new subscription for JobseekerID: %d, NewsletterID: %d", req.Jobseekerid, req.Newsletterid)
+		subid, err := s.storer.CreateSubscription(ctx, &storer.SubscriptionReq{
+			JobseekerID: req.Jobseekerid,
+			NewsLetterID: req.Newsletterid,
+		})
+		if err != nil {
+			log.Printf("Error creating subscription: %v", err)
+			return nil, err
+		}
+
+		log.Printf("Creating payment for SubscriptionID: %d", subid)
+		paymentid, err := s.storer.CreatePayment(ctx, &storer.PaymentReq{
+			SubscriptionID: subid,
+			Amount:        nl.Amount,
+		})
+		if err != nil {
+			log.Printf("Error creating payment: %v", err)
+			return nil, err
+		}
+
+		log.Println("Creating Razorpay order")
+		client := razorpay.NewClient(s.cfg.RazorpayKey, s.cfg.RazorpaySecret)
+		razororderid, err := service.CreateRazorpayOrder(client, float64(nl.Amount))
+		if err != nil {
+			log.Printf("Error creating Razorpay order: %v", err)
+			return nil, err
+		}
+
+		log.Printf("Storing Razorpay order with OrderID: %s", razororderid)
+		razorid, err := s.storer.CreateRazorpayOrder(ctx, &storer.RazorpayReq{
+			PaymentID: paymentid,
+			OrderID:   razororderid,
+		})
+		if err != nil {
+			log.Printf("Error storing Razorpay order: %v", err)
+			return nil, err
+		}
+
+		log.Println("Fetching subscription, payment, and Razorpay details")
+		sub, err := s.storer.GetSubscription(ctx, subid)
+		if err != nil {
+			log.Printf("Error retrieving subscription: %v", err)
+			return nil, err
+		}
+
+		pay, err := s.storer.GetPayment(ctx, paymentid)
+		if err != nil {
+			log.Printf("Error retrieving payment: %v", err)
+			return nil, err
+		}
+
+		razor, err := s.storer.GetRazorpay(ctx, razorid)
+		if err != nil {
+			log.Printf("Error retrieving Razorpay details: %v", err)
+			return nil, err
+		}
+
+		log.Println("Successfully completed AddSubscription process")
+		return toPBSPR(sub, pay, razor), nil
+	}
+
+	// Handle existing subscriptions
+	log.Printf("Existing subscription found: %v", subb)
+	switch subb.Status {
+	case storer.Cancelled:
+		yes, err := s.storer.IsSubscriptionExpired(ctx, subb.ID)
+		if err != nil {
+			log.Printf("Error checking if subscription is expired: %v", err)
+			return nil, err
+		}
 		if yes {
 			err = s.storer.UpdateSubscriptionStatus(ctx, subb.ID, storer.Active)
 			if err != nil {
-				log.Printf("Error activation subscription: %v", err)
+				log.Printf("Error activating subscription: %v", err)
 				return nil, err
 			}
 		} else {
 			return nil, fmt.Errorf("subscription is already initiated - sub_status=%v - sub_id=%v, please renew the payment", subb.Status, subb.ID)
 		}
 		return &pb.SPR{Subscirption: nil, Razorpay: nil, Payment: nil}, nil
-	}
 
-	if subb.Status == storer.Active || subb.Status == storer.Expired {
+	case storer.Active, storer.Expired:
 		return nil, fmt.Errorf("subscription is already initiated - sub_status=%v - sub_id=%v, please renew the payment", subb.Status, subb.ID)
-	}
 
-	if subb.Status == storer.InActive {
+	case storer.InActive:
 		return nil, fmt.Errorf("subscription is already initiated - subscription is %v - sub_id=%v, due to payment pending", subb.Status, subb.ID)
 	}
 
-	log.Printf("Retrieving newsletter information for NewsletterID: %d", req.Newsletterid)
-	nl, err := s.storer.GetNewsLetter(ctx, req.Newsletterid)
-	if err != nil {
-		log.Printf("Error retrieving newsletter: %v", err)
-		return nil, err
-	}
-
-	log.Printf("Creating subscription for JobseekerID: %d, NewsletterID: %d", req.Jobseekerid, req.Newsletterid)
-	subid, err := s.storer.CreateSubscription(ctx, &storer.SubscriptionReq{JobseekerID: req.Jobseekerid, NewsLetterID: req.Newsletterid})
-	if err != nil {
-		log.Printf("Error creating subscription: %v", err)
-		return nil, err
-	}
-
-	log.Printf("Creating payment for SubscriptionID: %d", subid)
-	paymentid, err := s.storer.CreatePayment(ctx, &storer.PaymentReq{SubscriptionID: subid, Amount: nl.Amount})
-	if err != nil {
-		log.Printf("Error creating payment: %v", err)
-		return nil, err
-	}
-
-	log.Println("Creating Razorpay order")
-	client := razorpay.NewClient(s.cfg.RazorpayKey, s.cfg.RazorpaySecret)
-	razororderid, err := service.CreateRazorpayOrder(client, float64(nl.Amount))
-	if err != nil {
-		log.Printf("Error creating Razorpay order: %v", err)
-		return nil, err
-	}
-
-	log.Printf("Storing Razorpay order with OrderID: %s", razororderid)
-	razorid, err := s.storer.CreateRazorpayOrder(ctx, &storer.RazorpayReq{PaymentID: paymentid, OrderID: razororderid})
-	if err != nil {
-		log.Printf("Error storing Razorpay order: %v", err)
-		return nil, err
-	}
-
-	log.Println("Fetching subscription, payment, and Razorpay details")
-	sub, err := s.storer.GetSubscription(ctx, subid)
-	if err != nil {
-		log.Printf("Error retrieving subscription: %v", err)
-		return nil, err
-	}
-
-	pay, err := s.storer.GetPayment(ctx, paymentid)
-	if err != nil {
-		log.Printf("Error retrieving payment: %v", err)
-		return nil, err
-	}
-
-	razor, err := s.storer.GetRazorpay(ctx, razorid)
-	if err != nil {
-		log.Printf("Error retrieving Razorpay details: %v", err)
-		return nil, err
-	}
-
-	log.Println("Successfully completed AddSubscription process")
-	return toPBSPR(sub, pay, razor), nil
+	return nil, fmt.Errorf("unhandled subscription status: %v", subb.Status)
 }
 
 func (s *Server) GetSubscriptionAndPaymentDetails(ctx context.Context, req *pb.Subid) (*pb.SPR, error) {

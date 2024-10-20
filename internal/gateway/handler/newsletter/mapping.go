@@ -3,8 +3,32 @@ package newsletter
 import (
 	"strconv"
 
+	"github.com/ahdaan67/jobportal/internal/gateway/handler/jobseeker"
+	jb "github.com/ahdaan67/jobportal/utils/pb/jobseeker"
 	pb "github.com/ahdaan67/jobportal/utils/pb/newsletter"
 )
+
+func toPBNewsletter(n *NewsLetterReq) *pb.NewsLetterReq {
+	return &pb.NewsLetterReq{
+		EmployerId: n.EmployerID,
+		Content:    n.Content,
+		IsFree:     n.IsFree,
+		Amount:     n.Amount,
+	}
+}
+
+func toCreateJobseekerRes(j *jb.CreateJobseekerRes) *jobseeker.CreateJobseekerRes {
+	return &jobseeker.CreateJobseekerRes{
+		ID:          j.Id,
+		FirstName:   j.Firstname,
+		LastName:    j.Lastname,
+		Email:       j.Email,
+		Gender:      j.Gender,
+		Phone:       j.Phone,
+		DateOfBirth: j.Dateofbirth.AsTime(),
+		CreatedAt:   j.Createdat.AsTime(),
+	}
+}
 
 func toNewsLetterRes(n *pb.NewsLetterRes) *NewsLetterRes {
 	return &NewsLetterRes{

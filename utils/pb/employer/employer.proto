@@ -5,6 +5,7 @@ package employer;
 option go_package = "./";
 
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
 
 message CreateEmployerReq {
     string name = 1;
@@ -33,7 +34,19 @@ message EmpLoginReq {
     string password = 2;
 }
 
+message EmployerDetail {
+    EmployerRes Employer = 1;
+    int64 Followers = 2;
+    int64 Jobopertunities = 3;
+}
+
+message EmployerDetails {
+    repeated EmployerDetail employer = 1;
+}
+
 service Employer {
     rpc CreateEmployer(CreateEmployerReq) returns (EmployerRes) {}
     rpc LoginEmployer(EmpLoginReq) returns (EmployerRes) {}
+
+    rpc GetEmployers(google.protobuf.Empty) returns (EmployerDetails) {}
 }

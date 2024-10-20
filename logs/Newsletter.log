@@ -1,0 +1,4 @@
+time="2024-10-21T02:36:23+05:30" level=info msg="Configuration loaded successfully."
+time="2024-10-21T02:36:23+05:30" level=info msg="Successfully connected to database."
+time="2024-10-21T02:36:23+05:30" level=info msg="Newsletter server registered successfully."
+time="2024-10-21T02:36:23+05:30" level=info msg="Server listening on :9003"

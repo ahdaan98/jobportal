@@ -5,6 +5,13 @@ import (
 	"time"
 )
 
+type NewsLetterReq struct {
+	EmployerID int64     `db:"employer_id"`
+	Content    string    `db:"content"`
+	IsFree     bool      `db:"isfree"`
+	Amount     float32   `db:"amount"`
+}
+
 type NewsLetterRes struct {
 	ID         int64     `db:"id"`
 	EmployerID int64     `db:"employer_id"`

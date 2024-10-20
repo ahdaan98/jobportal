@@ -38,6 +38,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9
 	github.com/razorpay/razorpay-go v1.3.2
+	github.com/sirupsen/logrus v1.9.3
 	golang.org/x/net v0.28.0 // indirect
 	golang.org/x/oauth2 v0.23.0
 	golang.org/x/sys v0.25.0 // indirect

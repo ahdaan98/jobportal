@@ -28,7 +28,7 @@ func CreateRazorpayOrder(client *razorpay.Client, amount float64) (string, error
 	return body["id"].(string), nil
 }
 
-func verifyRazorpaySignature(orderId, paymentId, razorpaySignature, secret string) error {
+func VerifyRazorpaySignature(orderId, paymentId, razorpaySignature, secret string) error {
 	message := orderId + "|" + paymentId
 	mac := hmac.New(sha256.New, []byte(secret))
 	mac.Write([]byte(message))

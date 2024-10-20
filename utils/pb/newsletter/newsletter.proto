@@ -7,6 +7,13 @@ option go_package = "./";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
 
+message NewsLetterReq{
+    int64 employerId = 2;
+	string Content = 3;
+    bool isFree = 4;
+	float amount = 5;
+}
+
 message NewsLetterRes{
     int64 id = 1;
     int64 employerId = 2;
@@ -64,6 +71,10 @@ message SPR {
     RazorpayRes razorpay = 3;
 }
 
+message ArrSPR {
+    repeated SPR spr = 1;
+}
+
 message Razorpay {
     string pay_id = 3;
     string order_id = 4;
@@ -91,10 +102,13 @@ message GetSubscribersRes {
 service NewsLetter {
     rpc AddSubscription(SubscriptionReq) returns (SPR) {}
     rpc CancelSubscription(Subid) returns (google.protobuf.Empty) {}
+
+    rpc CreateNewsletter(NewsLetterReq) returns (NewsLetterRes) {}
     rpc GetNewsLetter(NLid) returns (NewsLetterRes) {}
     rpc ListNewsLetters(google.protobuf.Empty) returns (ListNewsLetterRes) {}
     rpc GetSubscriptionAndPaymentDetails(Subid) returns (SPR) {}
     rpc UpdateSubscriptionAndPayment(UpdateSubscriptionAndPaymentReq) returns (google.protobuf.Empty) {}
 
     rpc GetSubscribers(GetSubscribersReq) returns (GetSubscribersRes) {}
+    rpc GetSubscription(SubscriptionReq) returns (ArrSPR) {}
 }

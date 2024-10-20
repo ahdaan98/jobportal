@@ -120,3 +120,35 @@ func (s *Server) UnFollowEmployer(ctx context.Context, req *pb.FollowEmployerReq
 
 	return &emptypb.Empty{}, nil
 }
+
+func (s *Server) GetFollowingEmployers(ctx context.Context, req *pb.JobSeekerID) (*pb.Employers, error) {
+	empids, err := s.storer.GetFollowingEmployersId(ctx, req.Id)
+	if err!=nil {
+		return nil, err
+	}
+
+	var emps []*pb.EmployerRes
+	for _,e := range empids{
+		emp , err := s.estorer.GetEmployer(ctx,e)
+		if err!=nil {
+			return nil, err
+		}
+
+		emps = append(emps, toEmployerRes(emp))
+	}
+	return &pb.Employers{Emp: emps}, nil
+}
+
+func (s *Server) GetJobseekers(ctx context.Context, _ *emptypb.Empty) (*pb.Jobseekers, error) {
+	var pbjs []*pb.CreateJobseekerRes
+    jobseekers, err := s.storer.GetJobseekers(ctx)
+	if err!=nil {
+		return nil, err
+	}
+
+	for _,js := range jobseekers {
+		pbjs = append(pbjs, toPBCreateJobseeker(js))
+	}
+
+	return &pb.Jobseekers{Jobseekers: pbjs},  nil
+}

@@ -6,6 +6,7 @@ import (
 
 	"github.com/ahdaan67/jobportal/internal/user/storer/employer"
 	pb "github.com/ahdaan67/jobportal/utils/pb/employer"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type Server struct {
@@ -59,4 +60,35 @@ func (s *Server) LoginEmployer(ctx context.Context, req *pb.EmpLoginReq) (*pb.Em
     }
 
     return toEmployerRes(ep), nil
+}
+
+func (s *Server) GetEmployers(ctx context.Context, req *emptypb.Empty) (*pb.EmployerDetails, error) {
+    var employers pb.EmployerDetails
+
+    emps, err := s.storer.GetEmployers(ctx)
+    if err != nil {
+        return nil, err
+    }
+
+    for _, e := range emps {
+        emmp := &pb.EmployerDetail{
+            Employer:       toEmployerRes(e),
+            Followers:      0,
+            Jobopertunities: 0,
+        }
+
+        emmp.Followers, err = s.storer.GetFollowersCount(ctx, e.ID)
+        if err != nil {
+            return nil, err
+        }
+
+        emmp.Jobopertunities, err = s.storer.GetJobCounts(ctx, e.ID)
+        if err != nil {
+            return nil, err
+        }
+
+        employers.Employer = append(employers.Employer, emmp)
+    }
+
+    return &employers, nil
 }

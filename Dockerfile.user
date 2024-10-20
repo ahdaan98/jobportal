@@ -12,7 +12,11 @@ FROM alpine:latest
 WORKDIR /root/
 
 COPY --from=builder /app/user .
+COPY --from=builder /app/logging ./logging
+COPY --from=builder /app/logs ./logs
 COPY .env . 
+
+RUN mkdir -p /root/logs
 
 EXPOSE 9002
 

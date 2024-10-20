@@ -7,6 +7,7 @@ import (
 
 	"github.com/ahdaan67/jobportal/config"
 	"github.com/ahdaan67/jobportal/internal/gateway/response"
+	js "github.com/ahdaan67/jobportal/utils/pb/jobseeker"
 	pb "github.com/ahdaan67/jobportal/utils/pb/newsletter"
 	"github.com/gin-gonic/gin"
 	"github.com/razorpay/razorpay-go"
@@ -16,15 +17,244 @@ import (
 type Handler struct {
 	ctx    context.Context
 	client pb.NewsLetterClient
+	jsclient js.JobSeekerClient
 	cfg    config.Config
 }
 
-func NewHandler(client pb.NewsLetterClient, cfg config.Config) *Handler {
+func NewHandler(client pb.NewsLetterClient,jsclient js.JobSeekerClient, cfg config.Config) *Handler {
 	return &Handler{
 		ctx:    context.Background(),
 		client: client,
+		jsclient: jsclient,
 		cfg:    cfg,
 	}
+}
+
+func (h *Handler) SendNewsletter(c *gin.Context) {
+    id, exit := c.Get("id")
+    if !exit {
+        errRes := response.ErrorResponse{
+            Status:  "error",
+            Code:    http.StatusBadRequest,
+            Message: "failed to get id from authorization",
+        }
+        log.Println("Error: ", errRes.Message)
+        c.JSON(errRes.Code, errRes)
+        return
+    }
+
+    emp, ok := id.(int64)
+    if !ok {
+        errRes := response.ErrorResponse{
+            Status:  "error",
+            Code:    http.StatusBadRequest,
+            Message: "failed to convert from any to int64",
+        }
+        log.Println("Error: ", errRes.Message)
+        c.JSON(errRes.Code, errRes)
+        return
+    }
+
+    nl := c.Param("newsletterid")
+    nlid, err := strtoInt64(nl)
+    if err != nil {
+        errRes := response.ErrorResponse{
+            Status:  "error",
+            Code:    http.StatusBadRequest,
+            Message: "Invalid newsletter ID",
+            Errors:  map[string]string{"subid": err.Error()},
+        }
+        log.Println("Error: ", errRes.Message)
+        c.JSON(errRes.Code, errRes)
+        return
+    }
+
+    var newsletter Newsletter
+    err = c.ShouldBindJSON(&newsletter)
+    if err != nil {
+        errRes := response.ErrorResponse{
+            Status:  "error",
+            Code:    http.StatusBadRequest,
+            Message: "Invalid input data",
+            Errors:  map[string]string{"request": "Unable to parse request body"},
+        }
+        log.Println("Error: ", errRes.Message)
+        c.JSON(errRes.Code, errRes)
+        return
+    }
+
+    // Log the employee ID and newsletter ID
+    log.Printf("Sending newsletter: %d to employee ID: %d", nlid, emp)
+
+    subs, err := h.client.GetSubscribers(h.ctx, &pb.GetSubscribersReq{Empid: emp, Nlid: nlid})
+    if err != nil {
+        errRes := response.ErrorResponse{
+            Status:  "error",
+            Code:    http.StatusBadRequest,
+            Message: "failed to get subscribers details",
+            Errors:  map[string]string{"error": err.Error()},
+        }
+        log.Println("Error: ", errRes.Message)
+        c.JSON(errRes.Code, errRes)
+        return
+    }
+
+    log.Printf("Found %d subscribers for newsletter ID: %d", len(subs.Subs), nlid)
+
+    for _, s := range subs.Subs {
+        if s == nil || s.Id == 0 {
+            log.Println("Skipping invalid subscriber:", s)
+            continue
+        }
+
+        log.Printf("Fetching jobseeker profile for subscriber ID: %d", s.Id)
+        js, err := h.jsclient.GetJobseeker(h.ctx, &js.JobSeekerID{Id: s.JobseekerId})
+        if err != nil {
+            errRes := response.ErrorResponse{
+                Status:  "error",
+                Code:    http.StatusBadRequest,
+                Message: "failed to get jobseekers",
+                Errors:  map[string]string{"error": err.Error()},
+            }
+            log.Println("Error: ", errRes.Message)
+            c.JSON(errRes.Code, errRes)
+            return
+        }
+
+        jobseeker := toCreateJobseekerRes(js)
+		log.Println(jobseeker)
+        err = SendNewsletter(jobseeker.Email, h.cfg, newsletter)
+        if err != nil {
+            log.Println("Failed to send email to jobseeker:", jobseeker.Email, "Error:", err)
+        } else {
+            log.Println("Successfully sent email to jobseeker:", jobseeker.Email)
+        }
+    }
+
+    succRes := response.SuccessResponse{
+        Status:  "success",
+        Code:    http.StatusOK,
+        Message: "successfully sent emails",
+    }
+    log.Println("Success: ", succRes.Message)
+    c.JSON(succRes.Code, succRes)
+}
+
+func (h *Handler) CreateNewsletterService(c *gin.Context) {
+	id, exit := c.Get("id")
+	if !exit {
+		errRes := response.ErrorResponse{
+			Status:  "error",
+			Code:    http.StatusBadRequest,
+			Message: "failed to get id from authorization",
+		}
+		c.JSON(errRes.Code, errRes)
+		return
+	}
+
+	empid, ok := id.(int64)
+	if !ok {
+		errRes := response.ErrorResponse{
+			Status:  "error",
+			Code:    http.StatusBadRequest,
+			Message: "failed to convert from any to int64",
+		}
+		c.JSON(errRes.Code, errRes)
+		return
+	}
+
+	var newsletter NewsLetterReq
+	err := c.ShouldBindJSON(&newsletter)
+	newsletter.EmployerID = empid
+	if err != nil {
+		errRes := response.ErrorResponse{
+			Status:  "error",
+			Code:    http.StatusBadRequest,
+			Message: "Invalid input data",
+			Errors:  map[string]string{"request": "Unable to parse request body"},
+		}
+		c.JSON(errRes.Code, errRes)
+		return
+	}
+
+	nsres, err := h.client.CreateNewsletter(h.ctx, toPBNewsletter(&newsletter))
+	if err != nil {
+		errRes := response.ErrorResponse{
+			Status:  "error",
+			Code:    http.StatusBadRequest,
+			Message: "failed to create newsletter service",
+			Errors:  map[string]string{"error": err.Error()},
+		}
+		c.JSON(errRes.Code, errRes)
+		return
+	}
+
+	succRes := response.SuccessResponse{
+		Status:  "success",
+		Code:    http.StatusOK,
+		Message: "successfully got Subscription Details",
+		Data:    toNewsLetterRes(nsres),
+	}
+
+	c.JSON(succRes.Code, succRes)
+}
+
+func (h *Handler) GetSubscription(c *gin.Context) {
+	id, exit := c.Get("id")
+	if !exit {
+		errRes := response.ErrorResponse{
+			Status:  "error",
+			Code:    http.StatusBadRequest,
+			Message: "failed to get id from authorization",
+		}
+		c.JSON(errRes.Code, errRes)
+		return
+	}
+	jsid, ok := id.(int64)
+	if !ok {
+		errRes := response.ErrorResponse{
+			Status:  "error",
+			Code:    http.StatusBadRequest,
+			Message: "failed to convert from any to int64",
+		}
+		c.JSON(errRes.Code, errRes)
+		return
+	}
+
+	arrSPR, err := h.client.GetSubscription(h.ctx, &pb.SubscriptionReq{Jobseekerid: jsid, Newsletterid: 0})
+	if err!=nil {
+		errRes := response.ErrorResponse{
+			Status:  "error",
+			Code:    http.StatusBadRequest,
+			Message: "failed to get get subscription details",
+			Errors: map[string]string{
+				"error":err.Error(),
+			},
+		}
+		c.JSON(errRes.Code, errRes)
+		return
+	}
+	type sprRes struct {
+        Subscription *SubscriptionRes `json:"subscription"`
+        Payment      *PaymentRes      `json:"payment"`
+        Razorpay     *RazorpayRes     `json:"razorpay"`
+    }
+	var res []sprRes
+
+	for _, spr := range arrSPR.Spr {
+		s,p,r := ToSPR(spr)
+		log.Println(s,p,r)
+		sprDet := sprRes{Subscription: s,Payment: p, Razorpay: r}
+		res = append(res, sprDet)
+		log.Println(sprDet)
+	}
+	succRes := response.SuccessResponse{
+		Status:  "success",
+		Code:    http.StatusOK,
+		Message: "successfully got Subscription Details",
+		Data:    res,
+	}
+	c.JSON(succRes.Code, succRes)
 }
 
 func (h *Handler) GetNewsLetter(c *gin.Context) {
@@ -281,14 +511,22 @@ func (h *Handler) CancelSubscription(c *gin.Context) {
 }
 
 func (h *Handler) GetSubscribers(c *gin.Context) {
-	empid, err := strtoInt64(c.Param("employerid"))
-	if err != nil {
-		log.Printf("Error converting employer_id to int64: %v", err)
+	id, exit := c.Get("id")
+	if !exit {
 		errRes := response.ErrorResponse{
 			Status:  "error",
 			Code:    http.StatusBadRequest,
-			Message: "Invalid employer_id",
-			Errors:  map[string]string{"grpc": err.Error()},
+			Message: "failed to get id from authorization",
+		}
+		c.JSON(errRes.Code, errRes)
+		return
+	}
+	empid, ok := id.(int64)
+	if !ok {
+		errRes := response.ErrorResponse{
+			Status:  "error",
+			Code:    http.StatusBadRequest,
+			Message: "failed to convert from any to int64",
 		}
 		c.JSON(errRes.Code, errRes)
 		return

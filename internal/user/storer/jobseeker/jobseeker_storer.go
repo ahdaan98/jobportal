@@ -144,3 +144,33 @@ func (js *JOBSEEKERstorer) UnFollowEmployer(ctx context.Context, f *FollowEmploy
 
 	return nil
 }
+
+func (js *JOBSEEKERstorer) GetFollowingEmployersId(ctx context.Context, id int64) ([]int64, error) {
+	var empid []int64
+	err := js.db.SelectContext(ctx, &empid, "SELECT employer_id FROM follows WHERE jobseeker_id=$1",id)
+	if err != nil {
+		return nil, fmt.Errorf("error getting employer id's: %w", err)
+	}
+
+	return empid, nil
+}
+
+func (es *JOBSEEKERstorer) GetEmployers(ctx context.Context) ([]*CreateJobseekerRes, error) {
+	var jobseekers []*CreateJobseekerRes
+	err := es.db.SelectContext(ctx, &jobseekers, "SELECT * FROM employers")
+	if err != nil {
+		return nil, fmt.Errorf("error listing jobseekers: %w", err)
+	}
+
+	return jobseekers, nil
+}
+
+func (es *JOBSEEKERstorer) GetJobseekers(ctx context.Context) ([]*CreateJobseekerRes, error) {
+	var js []*CreateJobseekerRes
+	err := es.db.SelectContext(ctx, &js, "SELECT * FROM jobseekers")
+	if err != nil {
+		return nil, fmt.Errorf("error listing employers: %w", err)
+	}
+
+	return js, nil
+}

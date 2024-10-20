@@ -41,21 +41,27 @@ func RegisterRoutes(jobhandler *job.Handler, jobseekerhandler *jobseeker.Handler
 	r.GET("/job/:id", jobhandler.GetJob)
 	r.GET("/jobs", jobhandler.ListJobs)
 
+	r.GET("/employers", employerhandler.GetEmployers)
+	r.GET("/jobseekers", jobseekerhandler.GetJobseekers)
+
 	jobseeker := r.Group("/jobseeker")
 	jobseeker.Use(middleware.JobSeekerMiddleware())
 	{
 
 		jobseeker.GET("/profile/:id", jobseekerhandler.GetJobseekerProfile)
-		jobseeker.POST("/apply/job/:jobseekerid/:jobid", jobhandler.ApplyJob)
+		jobseeker.POST("/apply/job/:jobid", jobhandler.ApplyJob)
 		jobseeker.GET("/applicants/:jobid", jobhandler.ListApplyJobsByid)
 
 		jobseeker.POST("/follow/employer", jobseekerhandler.FollowEmployers)
 		jobseeker.DELETE("/unfollow/employer", jobseekerhandler.UnFollowEmployers)
+		jobseeker.GET("/follows", jobseekerhandler.GetFollowingEmployers)
 
 		jobseeker.GET("/newsletter/:newsletterid", newletter.GetNewsLetter)
 		jobseeker.GET("/newsletters/list", newletter.ListNewsLetters)
 		jobseeker.POST("/newsletter/subscription", newletter.AddSubscription)
 		jobseeker.PUT("/newletter/subscription/cancel/:subid", newletter.CancelSubscription)
+
+		jobseeker.GET("/subscription", newletter.GetSubscription)
 	}
 
 	r.POST("/employer/signup", employerhandler.EmployerSignup)
@@ -71,10 +77,10 @@ func RegisterRoutes(jobhandler *job.Handler, jobseekerhandler *jobseeker.Handler
 		employer.PUT("/applicant/reject/:jobid/:jobseekerid", jobhandler.RejectApplicant)
 		employer.GET("/applicant/:jobid/:status", jobhandler.GetApplicantsByStatus)
 
-		employer.GET("/newsletter/subscribers/:employerid/:newsletterid", newletter.GetSubscribers)
+		employer.POST("/newsletter", newletter.CreateNewsletterService)
+		employer.GET("/newsletter/subscribers/:newsletterid", newletter.GetSubscribers)
+		employer.POST("/newsletter/send/:newsletterid", newletter.SendNewsletter)
 	}
-
-	r.GET("/newsletter/subscribers/:employerid/:newsletterid", newletter.GetSubscribers)
 
 	return r
 }

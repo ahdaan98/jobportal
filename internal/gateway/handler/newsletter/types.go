@@ -2,6 +2,14 @@ package newsletter
 
 import "time"
 
+type NewsLetterReq struct {
+	ID         int64   `json:"id"`
+	EmployerID int64   `json:"employer_id"`
+	Content    string  `json:"content"`
+	IsFree     bool    `json:"is_free"`
+	Amount     float32 `json:"amount"`
+}
+
 type NewsLetterRes struct {
 	ID         int64   `json:"id"`
 	EmployerID int64   `json:"employer_id"`
